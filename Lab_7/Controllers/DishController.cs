@@ -84,35 +84,57 @@ public class DishController : ControllerBase
 
     [HttpPut]
     [Route("/UpdateDish")]
-    public IActionResult UpdateDish([FromBody] DishDto dishDto, int id)
+    public async Task<IActionResult> UpdateDish([FromBody] DishDto dishDto, int id)
     {
         try
         {
-            var currentDish = _dishService.GetByIdAsync(id).Result;
+            var currentDish = await _dishService.GetByIdAsync(id);
 
-            if (currentDish != null && currentDish.Name != dishDto.Name)
+            if (currentDish == null)
             {
-                currentDish.DishSizeId = _dishSizeService.FindByName(dishDto.Size).Result.Id;
-                currentDish.Price = dishDto.Price;
+                return NotFound("Dish not found");
+            }
+            
+            if (!string.IsNullOrWhiteSpace(dishDto.Name))
+            {
                 currentDish.Name = dishDto.Name;
+            }
+            
+            if (dishDto.Price > 0)
+            {
+                currentDish.Price = dishDto.Price;
+            }
+
+            if (!string.IsNullOrWhiteSpace(dishDto.Image))
+            {
+                currentDish.Image = dishDto.Image;
+            }
+
+            if (dishDto.DishIngridientsNames != null && dishDto.DishIngridientsNames.Any())
+            {
+                currentDish.DishIngridientsIds.Clear();
                 foreach (var name in dishDto.DishIngridientsNames)
                 {
-                    currentDish.DishIngridientsIds.Add(_ingridientService.FindByName(name).Result.Id);
+                    var ingredient = await _ingridientService.FindByName(name);
+                    if (ingredient != null)
+                    {
+                        currentDish.DishIngridientsIds.Add(ingredient.Id);
+                    }
                 }
-                _dishService.UpdateAsync(currentDish);
-                return Ok("You update a Dish");
             }
-            return BadRequest("You already have this dish");
+            
+            await _dishService.UpdateAsync(currentDish);
+            return Ok(new { message = "Dish updated successfully"});
         }
-        catch
+        catch (Exception ex)
         {
-            return BadRequest("You have a problem in update");
+            return BadRequest($"Error updating dish: {ex.Message}");
         }
     }
-
+    
     [HttpPut]
     [Route("/UpdateDishSize")]
-    public IActionResult UpdateDishSize(string name, decimal price, int id)
+    public IActionResult UpdateDishSize(string name, decimal price, int id, string? image)
     {
         try
         {
@@ -127,8 +149,9 @@ public class DishController : ControllerBase
 
             currentDishSize.Size = name;
             currentDishSize.Price = price;
+            currentDishSize.Image = image;
             _dishSizeService.UpdateAsync(currentDishSize);
-            return Ok("You update a Size");
+            return Ok(new{ message = "You update a Size"});
         }
         catch
         {
@@ -140,44 +163,70 @@ public class DishController : ControllerBase
 
     [HttpPost]
     [Route("/AddDish")]
-    public IActionResult AddDish([FromBody] DishDto dishDto)
+    public async Task<IActionResult> AddDish([FromBody] DishDto dishDto)
     {
         try
         {
-            var size = _dishSizeService.FindByName(dishDto.Size).Result;
+            if (dishDto == null)
+            {
+                return BadRequest("Dish data is missing.");
+            }
+
+            if (string.IsNullOrEmpty(dishDto.Name) || dishDto.Price <= 0)
+            {
+                return BadRequest("Invalid dish data. Ensure all required fields are provided.");
+            }
+
+            var size = await _dishSizeService.FindByName("S");
+            if (size == null)
+            {
+                return NotFound("Dish size 'S' not found.");
+            }
+            
+            Dish dish = new Dish()
+            {
+                DishSize = size,
+                DishSizeId = size.Id,
+                Name = dishDto.Name,
+                Price = dishDto.Price,
+                Image = dishDto.Image
+            };
 
             List<Ingridient> ingridients = new List<Ingridient>();
             List<int> ingridientsIds = new List<int>();
-            foreach (var names in dishDto.DishIngridientsNames)
-            {
-                ingridients.Add(_dishIngridientService.GetByName(names).Result);
-                ingridientsIds.Add(_dishIngridientService.GetByName(names).Result.Id);
-            }
 
-            if (dishDto != null && size != null)
+            if (dishDto.DishIngridientsNames == null)
             {
-                Dish dish = new Dish()
+                dish.DishIngridientsIds = new List<int>();
+            }
+            else
+            {
+                foreach (var name in dishDto.DishIngridientsNames)
                 {
-                    DishSize = size,
-                    DishSizeId = size.Id,
-                    Name = dishDto.Name,
-                    Price = dishDto.Price,
-                    Ingridients = ingridients,
-                    DishIngridientsIds = ingridientsIds
-                };
+                    var ingredient = await _dishIngridientService.GetByName(name);
+                    ingridients.Add(ingredient);
+                    ingridientsIds.Add(ingredient.Id);
+                }
 
-                _dishService.AddAsync(dish);
-                
-                return Ok("You add a new dish");
+                dish.Ingridients = ingridients;
+                dish.DishIngridientsIds = ingridientsIds;
             }
+            
+            
+            
+           
 
-            return NotFound("Not found ingridients or size for your dish");
+            await _dishService.AddAsync(dish);
+
+            return Ok(new {message = "You have added a new dish."});
         }
-        catch
+        catch (Exception ex)
         {
-            return BadRequest("You have a problems with adding a dish");
+            // В случае ошибки возвращаем более подробную информацию
+            return BadRequest($"An error occurred while adding the dish: {ex.Message}");
         }
     }
+
     
     [HttpPost]
     [Route("/AddDishSize")]
@@ -186,7 +235,7 @@ public class DishController : ControllerBase
         try
         {
             var currentDishSizePrice = _dishSizeService.FindByPrice(dishSizeDto.Price).Result;
-            var currentDishSizeName = _dishSizeService.FindByName(dishSizeDto.Name).Result;
+            var currentDishSizeName = _dishSizeService.FindByName(dishSizeDto.Size).Result;
 
             if (currentDishSizeName != null || currentDishSizePrice != null)
             {
@@ -196,10 +245,11 @@ public class DishController : ControllerBase
             DishSize dishSize = new DishSize()
             {
                 Price = dishSizeDto.Price,
-                Size = dishSizeDto.Name
+                Size = dishSizeDto.Size,
+                Image = dishSizeDto.Image
             };
             _dishSizeService.AddAsync(dishSize);
-            return Ok("You add a new Size");
+            return Ok(new { message = "You add a new Size"});
         }
         catch
         {
@@ -215,9 +265,9 @@ public class DishController : ControllerBase
     {
         try
         {
-            var dish = _dishService.GetByIdAsync(id);
-            _dishService.DeleteAsync(dish.Result);
-            return Ok("Delete Dish is Ok");
+            var dish = _dishService.GetByIdAsync(id).Result;
+            _dishService.DeleteAsync(dish);
+            return Ok(new { message = "Delete Dish is Ok" });
         }
         catch
         {
@@ -233,7 +283,7 @@ public class DishController : ControllerBase
         {
             var size = _dishSizeService.GetByIdAsync(id);
             _dishSizeService.DeleteAsync(size.Result);
-            return Ok("Delete Size is Ok");
+            return Ok(new{ message = "Delete Size is Ok"});
         }
         catch
         {
