@@ -3,6 +3,7 @@ using Data.Models;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Lab_7.Controllers;
+
 [Route("api/[controller]")]
 public class IngridientController : ControllerBase
 {
@@ -17,7 +18,7 @@ public class IngridientController : ControllerBase
         _dishIngridientService = dishIngridientService;
     }
 
-// Get -----------------------------------------------------------------------------------------------    
+    // Get -----------------------------------------------------------------------------------------------    
     [HttpGet]
     [Route("/GetAllIngridient")]
     public async Task<ActionResult<IEnumerable<Ingridient>>> GetAllIngridient()
@@ -30,104 +31,115 @@ public class IngridientController : ControllerBase
     [Route("/GetAllIngridientByName")]
     public async Task<ActionResult<IEnumerable<Ingridient>>> GetIngridientByName(string name)
     {
-        var ingridients = await _ingridientService.FindByName(name);
-        return Ok(ingridients);
+        var ingridient = await _ingridientService.FindByName(name);
+        
+        return ingridient != null ? Ok(ingridient) : NotFound($"Ingredient with name {name} not found.");
     }
     
     [HttpGet]
     [Route("/GetIngridientById")]
-    public async Task<ActionResult<IEnumerable<Ingridient>>> GetById(int id)
+    public async Task<ActionResult<Ingridient>> GetById(int id)
     {
         var ingridient = await _ingridientService.GetByIdAsync(id);
-        return Ok(ingridient);
+        return ingridient != null ? Ok(ingridient) : NotFound($"Ingredient with ID {id} not found.");
     }
     
     [HttpGet]
     [Route("/GetAllDishIngridients")]
-    public async Task<ActionResult<IEnumerable<Ingridient>>> GetAllDishIngridients()
+    public async Task<ActionResult<IEnumerable<DishIngridient>>> GetAllDishIngridients()
     {
         var dishIngridients = await _dishIngridientService.GetAllAsync();
-        
         return Ok(dishIngridients);
     }
-// Post ----------------------------------------------------------------------------------------------    
+
+    // Post ----------------------------------------------------------------------------------------------    
     [HttpPost]
     [Route("/AddIngridient")]
-    public async Task<ActionResult> AddIngridient(string name)
+    public async Task<ActionResult> AddIngridient(string name, string? image)
     {
-        Ingridient ingridient = new Ingridient()
+        var existingIngridients = await _ingridientService.FindByName(name);
+
+        if (existingIngridients == null)
         {
-            Name = name
-        };
-        DishIngridient dishIngridient = new DishIngridient()
-        {
-            Ingridient = ingridient,
-            IngridientId = ingridient.Id
-        };
-        await _ingridientService.AddAsync(ingridient);
-        await _dishIngridientService.AddAsync(dishIngridient);
-        return Ok($"You add a new ingridient {ingridient.Name}");
+            var ingridient = new Ingridient { Name = name, Image = image };
+            var dishIngridient = new DishIngridient { Ingridient = ingridient, IngridientId = ingridient.Id };
+
+            await _ingridientService.AddAsync(ingridient);
+            await _dishIngridientService.AddAsync(dishIngridient);
+
+            return Ok(new { message = $"Added new ingredient {ingridient.Name}" });
+        }
+
+        return BadRequest("An ingredient with this name already exists.");
     }
     
     [HttpPost]
     [Route("/AddIngridientToDish")]
     public async Task<ActionResult> AddIngridientToDish(int dishId, int ingridientId)
     {
-        var dish = _dishService.GetByIdAsync(dishId).Result;
-        var ingridient  = _ingridientService.GetByIdAsync(dishId).Result;
+        var dish = await _dishService.GetByIdAsync(dishId);
+        var ingridient = await _ingridientService.GetByIdAsync(ingridientId);
+
         if (dish != null && ingridient != null)
         {
-            DishIngridient dishIngridient = new DishIngridient()
+            var dishIngridient = new DishIngridient
             {
                 DishId = dishId,
                 Dish = dish,
                 IngridientId = ingridientId,
                 Ingridient = ingridient
             };
-            
+
             await _dishIngridientService.AddAsync(dishIngridient);
             dish.DishIngridientsIds?.Add(dishIngridient.Id);
             await _dishService.UpdateAsync(dish);
-            return Ok($"You add a new ingridient {ingridient.Name}");
+
+            return Ok(new { message = $"Added ingredient {ingridient.Name} to dish." });
         }
 
-        return NotFound("Not fount dish or ingridient");
+        return NotFound("Dish or ingredient not found.");
     }
-    
-// Put -----------------------------------------------------------------------------------------------
+
+    // Put -----------------------------------------------------------------------------------------------
     
     [HttpPut]
     [Route("/UpdateIngridient")]
-    public async Task<ActionResult> UpdateIngridient(string name, int id)
+    public async Task<ActionResult> UpdateIngridient(string name, int id, string? image)
     {
         var current = await _ingridientService.GetByIdAsync(id);
-        var currentInfo = _ingridientService.FindByName(name).Result;
-        if (currentInfo == null && current != null)
+
+        if (current == null)
         {
-            current.Name = name;
-            await _ingridientService.UpdateAsync(current);
-            return Ok("Update is ok");
+            return NotFound("Ingredient not found.");
         }
 
-        return BadRequest("Update is not ok");
+        var existingIngridientWithName = await _ingridientService.FindByName(name);
+
+        if (existingIngridientWithName == null || existingIngridientWithName.Id == id)
+        {
+            current.Name = name;
+            current.Image = image;
+            await _ingridientService.UpdateAsync(current);
+
+            return Ok(new { message = "Ingredient updated successfully." });
+        }
+
+        return BadRequest("An ingredient with this name already exists.");
     }
     
-// Delete ---------------------------------------------------------------------------------------------    
+    // Delete ---------------------------------------------------------------------------------------------    
     [HttpDelete]
     [Route("/DeleteIngridient")]
     public async Task<ActionResult> DeleteIngridient(int id)
     {
-        try
+        var ingridient = await _ingridientService.GetByIdAsync(id);
+
+        if (ingridient == null)
         {
-            var ingridient = _ingridientService.GetByIdAsync(id).Result;
-            await _ingridientService.DeleteAsync(ingridient);
-            return Ok("Delete Ingridient");
+            return NotFound($"No ingredient found with ID {id} to delete.");
         }
-        catch (Exception e)
-        {
-            return NotFound($"No ingridient for delete {e}");
-        }
-        
+
+        await _ingridientService.DeleteAsync(ingridient);
+        return Ok(new { message = "Ingredient deleted successfully." });
     }
-    
 }

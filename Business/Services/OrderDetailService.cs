@@ -41,7 +41,7 @@ public class OrderDetailService : IOrderDetailService
         await _unitOfWork.SaveAsync();
     }
 
-    public Task<IEnumerable<OrderDetail>> FindByOrderId(int id)
+    public Task<ICollection<OrderDetail>> FindByOrderId(int id)
     {
         return _unitOfWork.OrderDetailRepository.FindByOrderId(id);
     }

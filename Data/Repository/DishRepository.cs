@@ -18,15 +18,15 @@ public class DishRepository : IDishRepository
         return await _db.Dishes.ToListAsync();
     }
 
-    public async Task<Dish> GetByIdAsync(int id)
+    public Task<Dish> GetByIdAsync(int id)
     {
         var dish = _db.Dishes.FindAsync(id).Result;
         if (dish != null)
         {
-            return dish;
+            return Task.FromResult(dish);
         }
 
-        return null;
+        return Task.FromResult<Dish>(null);
     }
 
     public async Task AddAsync(Dish entity)

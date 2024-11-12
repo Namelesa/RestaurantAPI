@@ -4,5 +4,5 @@ namespace Business.Interfaces;
 
 public interface IOrderDetailService : ICrud<OrderDetail>
 {
-    Task<IEnumerable<OrderDetail>> FindByOrderId (int id);
+    Task<ICollection<OrderDetail>> FindByOrderId (int id);
 }

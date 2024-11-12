@@ -4,5 +4,5 @@ namespace Data.Interfaces;
 
 public interface IOrderDetailRepository : IRepository<OrderDetail>
 {
-    Task<IEnumerable<OrderDetail>> FindByOrderId(int id);
+    Task<ICollection<OrderDetail>> FindByOrderId(int id);
 }

@@ -43,9 +43,10 @@ public class OrderDetailRepository : IOrderDetailRepository
         _db.SaveChangesAsync();
     }
 
-    public async Task<IEnumerable<OrderDetail>> FindByOrderId(int id)
+    public async Task<ICollection<OrderDetail>> FindByOrderId(int id)
     {
-        var info = _db.OrderDetails.Where(u => u.OrderId == id);
-        return info;
+        return await _db.OrderDetails
+            .Where(u => u.OrderId == id)
+            .ToListAsync(); 
     }
 }

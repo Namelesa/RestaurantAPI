@@ -10,138 +10,171 @@ public class OrderController : ControllerBase
 {
     private readonly IOrderService _orderService;
     private readonly IOrderDetailService _orderDetailService;
+    private readonly IDishService _dishService;
 
-    public OrderController(IOrderService orderService, IOrderDetailService orderDetailService)
+    public OrderController(IOrderService orderService, IOrderDetailService orderDetailService, IDishService dishService)
     {
-        _orderDetailService = orderDetailService;
         _orderService = orderService;
+        _orderDetailService = orderDetailService;
+        _dishService = dishService;
     }
-// Get -----------------------------------------------------------------------------------------------
 
-    [HttpGet]
-    [Route("/GetAllOrders")]
+    // Get -----------------------------------------------------------------------------------------------
+
+    [HttpGet("/GetAllOrders")]
     public async Task<ActionResult<IEnumerable<Order>>> GetAllOrders()
     {
         var orders = await _orderService.GetAllAsync();
         return Ok(orders);
     }
     
-    [HttpGet]
-    [Route("/GetOrderById")]
-    public async Task<ActionResult<IEnumerable<Order>>> GetOrderById(int id)
+    [HttpGet("/GetOrderById")]
+    public async Task<ActionResult<Order>> GetOrderById(int id)
     {
         var order = await _orderService.GetByIdAsync(id);
+        if (order == null)
+        {
+            return NotFound("Order not found");
+        }
+
+        var orderDetails = await _orderDetailService.FindByOrderId(id);
+
+        foreach (var detail in orderDetails)
+        {
+            detail.Dish = await _dishService.GetAllInfo(detail.DishId);
+        }
+        
+        order.OrderDetails = orderDetails;
+        
         return Ok(order);
     }
-    
-// Put -----------------------------------------------------------------------------------------------
 
-    [HttpPut]
-    [Route("/UpdateOrder")]
+    [HttpGet("/GetOrderDetailsById")]
+    public async Task<ActionResult<OrderDto>> GetOrderDetailsById(int orderId)
+    {
+        var order = await _orderService.GetByIdAsync(orderId);
+        if (order == null)
+        {
+            return NotFound("Order not found");
+        }
+
+        var orderDetails = await _orderDetailService.FindByOrderId(orderId);
+        var orderDetailsDto = orderDetails.Select(od => new OrderDetailDto
+        {
+            OrderId = od.OrderId,
+            DishId = od.DishId,
+            Quantity = od.Quantity
+        }).ToList();
+
+        var orderDto = new OrderDto
+        {
+            Total = order.Total,
+            OrderDetails = orderDetailsDto
+        };
+
+        return Ok(orderDto);
+    }
+
+    // Put -----------------------------------------------------------------------------------------------
+
+    [HttpPut("/UpdateOrder")]
     public async Task<ActionResult> UpdateOrder([FromBody] OrderDto orderDto, int orderId)
     {
-        var currentOrder = _orderService.GetByIdAsync(orderId).Result;
-        if (currentOrder != null)
+        var currentOrder = await _orderService.GetByIdAsync(orderId);
+        if (currentOrder == null)
         {
-            currentOrder.OrderDate = DateTime.UtcNow;
-            currentOrder.Total = orderDto.Total;
+            return NotFound("Order not found");
         }
+
+        currentOrder.OrderDate = DateTime.UtcNow;
+        currentOrder.Total = orderDto.Total;
+
         await _orderService.UpdateAsync(currentOrder);
-        return Ok("Update an order");
+        return Ok("Order updated successfully");
     }
     
-    [HttpPut]
-    [Route("/UpdateOrderDetail")]
+    [HttpPut("/UpdateOrderDetail")]
     public async Task<ActionResult> UpdateOrderDetail(int orderDetailId, int dishId, int quantity)
     {
-        var currentOrderDetail = _orderDetailService.GetByIdAsync(orderDetailId).Result;
-        if (currentOrderDetail != null)
+        var currentOrderDetail = await _orderDetailService.GetByIdAsync(orderDetailId);
+        if (currentOrderDetail == null)
         {
-            currentOrderDetail.Quantity = quantity;
-            currentOrderDetail.DishId = dishId;
+            return NotFound("Order detail not found");
         }
+
+        currentOrderDetail.Quantity = quantity;
+        currentOrderDetail.DishId = dishId;
+
         await _orderDetailService.UpdateAsync(currentOrderDetail);
-        return Ok("Update an order detail");
+        return Ok("Order detail updated successfully");
     }
-    
 
-// Post ----------------------------------------------------------------------------------------------
+    // Post ----------------------------------------------------------------------------------------------
 
-    [HttpPost]
-    [Route("/AddOrder")]
+    [HttpPost("/AddOrder")]
     public async Task<ActionResult> AddOrder([FromBody] OrderDto orderDto)
     {
-        Order order = new Order()
+        var order = new Order
         {
             OrderDate = DateTime.UtcNow,
             Total = orderDto.Total,
         };
         await _orderService.AddAsync(order);
-        return Ok("Add a new order");
+        return Ok("New order added successfully");
     }
     
-    [HttpPost]
-    [Route("/AddOrderDetail")]
+    [HttpPost("/AddOrderDetail")]
     public async Task<ActionResult> AddOrderDetail([FromBody] OrderDetailDto orderDto)
     {
         try
         {
-            OrderDetail order = new OrderDetail()
+            var orderDetail = new OrderDetail
             {
                 OrderId = orderDto.OrderId,
                 Quantity = orderDto.Quantity,
                 DishId = orderDto.DishId
             };
-            await _orderDetailService.AddAsync(order);
-            return Ok("Add a new order detail");
+            await _orderDetailService.AddAsync(orderDetail);
+            return Ok("New order detail added successfully");
         }
-        catch
+        catch (Exception ex)
         {
-            return BadRequest("Problem in adding");
+            return BadRequest($"Problem in adding order detail: {ex.Message}");
         }
     }
+
+    // Delete --------------------------------------------------------------------------------------------
     
-// Delete --------------------------------------------------------------------------------------------
-    [HttpDelete]
-    [Route("/DeleteOrder")]
+    [HttpDelete("/DeleteOrder")]
     public async Task<ActionResult> DeleteOrder(int id)
     {
-        try
+        var currentOrder = await _orderService.GetByIdAsync(id);
+        if (currentOrder == null)
         {
-            var current = _orderService.GetByIdAsync(id).Result;
-            var currentDetails = _orderDetailService.FindByOrderId(current.Id);
-
-            if (current != null && currentDetails != null)
-            {
-                foreach (var det in currentDetails.Result)
-                {
-                    _orderDetailService.DeleteAsync(det);
-                }
-
-                _orderService.DeleteAsync(current);
-            }
-
-            return Ok("You delete an order");
+            return NotFound("Order not found");
         }
-        catch
+
+        var currentDetails = await _orderDetailService.FindByOrderId(id);
+
+        foreach (var detail in currentDetails)
         {
-            return BadRequest("You have a problem with Delete");
+            await _orderDetailService.DeleteAsync(detail);
         }
+
+        await _orderService.DeleteAsync(currentOrder);
+        return Ok("Order deleted successfully");
     }
     
-    [HttpDelete]
-    [Route("/DeleteOrderDetail")]
+    [HttpDelete("/DeleteOrderDetail")]
     public async Task<ActionResult> DeleteOrderDetail(int detailId)
     {
-        var currentDetails = _orderDetailService.GetByIdAsync(detailId).Result;
-        if (currentDetails != null)
+        var currentDetails = await _orderDetailService.GetByIdAsync(detailId);
+        if (currentDetails == null)
         {
-            await _orderDetailService.DeleteAsync(currentDetails);
-            return Ok("You delete an order detail");
+            return NotFound("Order detail not found");
         }
-        else
-        {
-            return NotFound("No one OrderDetail with this Id");
-        }
+
+        await _orderDetailService.DeleteAsync(currentDetails);
+        return Ok("Order detail deleted successfully");
     }
 }
