@@ -87,19 +87,30 @@ public class DishController : ControllerBase
     public async Task<IActionResult> UpdateDishSize(int id, [FromBody] DishSizeDto dishSizeDto)
     {
         var currentDishSize = await _dishSizeService.GetByIdAsync(id);
-        if (await _dishSizeService.FindByName(dishSizeDto.Size) != null || 
-            await _dishSizeService.FindByPrice(dishSizeDto.Price) != null)
+    
+        if (currentDishSize == null)
+        {
+            return NotFound("Dish size not found");
+        }
+        
+        var existingSize = await _dishSizeService.FindByName(dishSizeDto.Size);
+        var existingPrice = await _dishSizeService.FindByPrice(dishSizeDto.Price);
+
+        if ((dishSizeDto.Size != currentDishSize.Size && existingSize != null) || 
+            (dishSizeDto.Price != currentDishSize.Price && existingPrice != null))
         {
             return BadRequest("You already have this size or price for size");
         }
-
-        currentDishSize.Size = dishSizeDto.Size;
-        currentDishSize.Price = dishSizeDto.Price;
-        currentDishSize.Image = dishSizeDto.Image;
-
+        
+        currentDishSize.Size = dishSizeDto.Size != currentDishSize.Size ? dishSizeDto.Size : currentDishSize.Size;
+        currentDishSize.Price = dishSizeDto.Price != currentDishSize.Price ? dishSizeDto.Price : currentDishSize.Price;
+        currentDishSize.Image = dishSizeDto.Image ?? currentDishSize.Image;
+        
         await _dishSizeService.UpdateAsync(currentDishSize);
-        return Ok(new { message = "You update a Size" });
+    
+        return Ok(new { message = "Dish size updated successfully" });
     }
+
 
 // Post -----------------------------------------------------------------------------------------------
     [HttpPost("AddDish")]
