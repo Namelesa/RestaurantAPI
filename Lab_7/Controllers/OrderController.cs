@@ -21,14 +21,14 @@ public class OrderController : ControllerBase
 
     // Get -----------------------------------------------------------------------------------------------
 
-    [HttpGet("/GetAllOrders")]
+    [HttpGet("GetAllOrders")]
     public async Task<ActionResult<IEnumerable<Order>>> GetAllOrders()
     {
         var orders = await _orderService.GetAllAsync();
         return Ok(orders);
     }
     
-    [HttpGet("/GetOrderById")]
+    [HttpGet("GetOrderById")]
     public async Task<ActionResult<Order>> GetOrderById(int id)
     {
         var order = await _orderService.GetByIdAsync(id);
@@ -49,7 +49,7 @@ public class OrderController : ControllerBase
         return Ok(order);
     }
 
-    [HttpGet("/GetOrderDetailsById")]
+    [HttpGet("GetOrderDetailsById")]
     public async Task<ActionResult<OrderDto>> GetOrderDetailsById(int orderId)
     {
         var order = await _orderService.GetByIdAsync(orderId);
@@ -77,7 +77,7 @@ public class OrderController : ControllerBase
 
     // Put -----------------------------------------------------------------------------------------------
 
-    [HttpPut("/UpdateOrder")]
+    [HttpPut("UpdateOrder")]
     public async Task<ActionResult> UpdateOrder([FromBody] OrderDto orderDto, int orderId)
     {
         var currentOrder = await _orderService.GetByIdAsync(orderId);
@@ -93,7 +93,7 @@ public class OrderController : ControllerBase
         return Ok("Order updated successfully");
     }
     
-    [HttpPut("/UpdateOrderDetail")]
+    [HttpPut("UpdateOrderDetail")]
     public async Task<ActionResult> UpdateOrderDetail(int orderDetailId, int dishId, int quantity)
     {
         var currentOrderDetail = await _orderDetailService.GetByIdAsync(orderDetailId);
@@ -111,7 +111,7 @@ public class OrderController : ControllerBase
 
     // Post ----------------------------------------------------------------------------------------------
 
-    [HttpPost("/AddOrder")]
+    [HttpPost("AddOrder")]
     public async Task<ActionResult> AddOrder([FromBody] OrderDto orderDto)
     {
         var order = new Order
@@ -123,7 +123,7 @@ public class OrderController : ControllerBase
         return Ok("New order added successfully");
     }
     
-    [HttpPost("/AddOrderDetail")]
+    [HttpPost("AddOrderDetail")]
     public async Task<ActionResult> AddOrderDetail([FromBody] OrderDetailDto orderDto)
     {
         try
@@ -145,7 +145,7 @@ public class OrderController : ControllerBase
 
     // Delete --------------------------------------------------------------------------------------------
     
-    [HttpDelete("/DeleteOrder")]
+    [HttpDelete("DeleteOrder")]
     public async Task<ActionResult> DeleteOrder(int id)
     {
         var currentOrder = await _orderService.GetByIdAsync(id);
@@ -165,7 +165,7 @@ public class OrderController : ControllerBase
         return Ok("Order deleted successfully");
     }
     
-    [HttpDelete("/DeleteOrderDetail")]
+    [HttpDelete("DeleteOrderDetail")]
     public async Task<ActionResult> DeleteOrderDetail(int detailId)
     {
         var currentDetails = await _orderDetailService.GetByIdAsync(detailId);

@@ -20,7 +20,7 @@ public class IngridientController : ControllerBase
 
     // Get -----------------------------------------------------------------------------------------------    
     [HttpGet]
-    [Route("/GetAllIngridient")]
+    [Route("GetAllIngridient")]
     public async Task<ActionResult<IEnumerable<Ingridient>>> GetAllIngridient()
     {
         var ingridients = await _ingridientService.GetAllAsync();
@@ -28,7 +28,7 @@ public class IngridientController : ControllerBase
     }
     
     [HttpGet]
-    [Route("/GetAllIngridientByName")]
+    [Route("GetAllIngridientByName")]
     public async Task<ActionResult<IEnumerable<Ingridient>>> GetIngridientByName(string name)
     {
         var ingridient = await _ingridientService.FindByName(name);
@@ -37,7 +37,7 @@ public class IngridientController : ControllerBase
     }
     
     [HttpGet]
-    [Route("/GetIngridientById")]
+    [Route("GetIngridientById")]
     public async Task<ActionResult<Ingridient>> GetById(int id)
     {
         var ingridient = await _ingridientService.GetByIdAsync(id);
@@ -45,7 +45,7 @@ public class IngridientController : ControllerBase
     }
     
     [HttpGet]
-    [Route("/GetAllDishIngridients")]
+    [Route("GetAllDishIngridients")]
     public async Task<ActionResult<IEnumerable<DishIngridient>>> GetAllDishIngridients()
     {
         var dishIngridients = await _dishIngridientService.GetAllAsync();
@@ -54,7 +54,7 @@ public class IngridientController : ControllerBase
 
     // Post ----------------------------------------------------------------------------------------------    
     [HttpPost]
-    [Route("/AddIngridient")]
+    [Route("AddIngridient")]
     public async Task<ActionResult> AddIngridient(string name, string? image)
     {
         var existingIngridients = await _ingridientService.FindByName(name);
@@ -74,7 +74,7 @@ public class IngridientController : ControllerBase
     }
     
     [HttpPost]
-    [Route("/AddIngridientToDish")]
+    [Route("AddIngridientToDish")]
     public async Task<ActionResult> AddIngridientToDish(int dishId, int ingridientId)
     {
         var dish = await _dishService.GetByIdAsync(dishId);
@@ -103,7 +103,7 @@ public class IngridientController : ControllerBase
     // Put -----------------------------------------------------------------------------------------------
     
     [HttpPut]
-    [Route("/UpdateIngridient")]
+    [Route("UpdateIngridient")]
     public async Task<ActionResult> UpdateIngridient(string name, int id, string? image)
     {
         var current = await _ingridientService.GetByIdAsync(id);
@@ -129,7 +129,7 @@ public class IngridientController : ControllerBase
     
     // Delete ---------------------------------------------------------------------------------------------    
     [HttpDelete]
-    [Route("/DeleteIngridient")]
+    [Route("DeleteIngridient")]
     public async Task<ActionResult> DeleteIngridient(int id)
     {
         var ingridient = await _ingridientService.GetByIdAsync(id);
