@@ -47,6 +47,6 @@ public class OrderDetailRepository : IOrderDetailRepository
     {
         return await _db.OrderDetails
             .Where(u => u.OrderId == id)
-            .ToListAsync(); 
+            .ToListAsync();
     }
 }

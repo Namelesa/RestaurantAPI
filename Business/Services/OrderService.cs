@@ -38,6 +38,6 @@ public class OrderService : IOrderService
     public async Task DeleteAsync(Order model)
     {
         _unitOfWork.OrderRepository.Delete(model);
-        await _unitOfWork.SaveAsync();
+        _unitOfWork.SaveAsync();
     }
 }
