@@ -10,14 +10,12 @@ public class DishController : ControllerBase
 {
     private readonly IDishService _dishService;
     private readonly IDishSizeService _dishSizeService;
-    private readonly IDishIngridientService _dishIngridientService;
     private readonly IIngridientService _ingridientService;
 
-    public DishController(IDishService dishService, IDishSizeService dishSizeService, IDishIngridientService dishIngridientService, IIngridientService ingridientService)
+    public DishController(IDishService dishService, IDishSizeService dishSizeService, IIngridientService ingridientService)
     {
         _dishService = dishService;
         _dishSizeService = dishSizeService;
-        _dishIngridientService = dishIngridientService;
         _ingridientService = ingridientService;
     }
 
@@ -70,12 +68,13 @@ public class DishController : ControllerBase
 
         if (dishDto.DishIngridientsNames?.Any() == true)
         {
-            currentDish.DishIngridientsIds.Clear();
             foreach (var name in dishDto.DishIngridientsNames)
             {
                 var ingredient = await _ingridientService.FindByName(name);
                 if (ingredient != null)
-                    currentDish.DishIngridientsIds.Add(ingredient.Id);
+                {
+                    currentDish.Ingridients.Add(ingredient);
+                }
             }
         }
 
@@ -130,7 +129,6 @@ public class DishController : ControllerBase
             Name = dishDto.Name,
             Price = dishDto.Price,
             Image = dishDto.Image,
-            DishIngridientsIds = new List<int>()
         };
 
         if (dishDto.DishIngridientsNames?.Any() == true)
@@ -138,11 +136,10 @@ public class DishController : ControllerBase
             var ingredients = new List<Ingridient>();
             foreach (var name in dishDto.DishIngridientsNames)
             {
-                var ingredient = await _dishIngridientService.GetByName(name);
+                var ingredient = await _ingridientService.FindByName(name);
                 if (ingredient != null)
                 {
                     ingredients.Add(ingredient);
-                    dish.DishIngridientsIds.Add(ingredient.Id);
                 }
             }
             dish.Ingridients = ingredients;

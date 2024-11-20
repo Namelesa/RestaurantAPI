@@ -15,4 +15,12 @@ public class AppDbContext : DbContext
     public DbSet<Order> Orders { get; set; }
     public DbSet<OrderDetail> OrderDetails { get; set; }
     public DbSet<DishIngridient> DishIngridients { get; set; }
+    
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<Ingridient>()
+            .HasMany(i => i.Dishes)
+            .WithMany(d => d.Ingridients)
+            .UsingEntity<DishIngridient>();
+    }
 }

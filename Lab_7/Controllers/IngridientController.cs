@@ -9,13 +9,11 @@ public class IngridientController : ControllerBase
 {
     private readonly IIngridientService _ingridientService;
     private readonly IDishService _dishService;
-    private readonly IDishIngridientService _dishIngridientService;
 
-    public IngridientController(IIngridientService ingridientService, IDishService dishService, IDishIngridientService dishIngridientService)
+    public IngridientController(IIngridientService ingridientService, IDishService dishService)
     {
         _ingridientService = ingridientService;
         _dishService = dishService;
-        _dishIngridientService = dishIngridientService;
     }
 
     // Get -----------------------------------------------------------------------------------------------    
@@ -44,13 +42,6 @@ public class IngridientController : ControllerBase
         return ingridient != null ? Ok(ingridient) : NotFound($"Ingredient with ID {id} not found.");
     }
     
-    [HttpGet]
-    [Route("GetAllDishIngridients")]
-    public async Task<ActionResult<IEnumerable<DishIngridient>>> GetAllDishIngridients()
-    {
-        var dishIngridients = await _dishIngridientService.GetAllAsync();
-        return Ok(dishIngridients);
-    }
 
     // Post ----------------------------------------------------------------------------------------------    
     [HttpPost]
@@ -62,10 +53,8 @@ public class IngridientController : ControllerBase
         if (existingIngridients == null)
         {
             var ingridient = new Ingridient { Name = name, Image = image };
-            var dishIngridient = new DishIngridient { Ingridient = ingridient, IngridientId = ingridient.Id };
 
             await _ingridientService.AddAsync(ingridient);
-            await _dishIngridientService.AddAsync(dishIngridient);
 
             return Ok(new { message = $"Added new ingredient {ingridient.Name}" });
         }
@@ -80,24 +69,15 @@ public class IngridientController : ControllerBase
         var dish = await _dishService.GetByIdAsync(dishId);
         var ingridient = await _ingridientService.GetByIdAsync(ingridientId);
 
-        if (dish != null && ingridient != null)
+        if (dish == null || ingridient == null)
         {
-            var dishIngridient = new DishIngridient
-            {
-                DishId = dishId,
-                Dish = dish,
-                IngridientId = ingridientId,
-                Ingridient = ingridient
-            };
-
-            await _dishIngridientService.AddAsync(dishIngridient);
-            dish.DishIngridientsIds?.Add(dishIngridient.Id);
-            await _dishService.UpdateAsync(dish);
-
-            return Ok(new { message = $"Added ingredient {ingridient.Name} to dish." });
+            return NotFound("Dish or ingredient not found.");
         }
 
-        return NotFound("Dish or ingredient not found.");
+        dish.Ingridients.Add(ingridient);
+        await _dishService.UpdateAsync(dish);
+    
+        return Ok(new { message = $"Added {ingridient.Name} to {dish.Name}" });
     }
 
     // Put -----------------------------------------------------------------------------------------------

@@ -46,4 +46,10 @@ public class DishRepository : IDishRepository
         _db.Dishes.Remove(entity);
         _db.SaveChanges();
     }
+
+    public async Task AddIngridientsToDish(List<Ingridient> ingridientNames, Dish dish)
+    {
+        dish.Ingridients.AddRange(ingridientNames);
+    }
+    
 }

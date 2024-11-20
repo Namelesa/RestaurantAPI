@@ -19,7 +19,6 @@ builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
 builder.Services.AddScoped<IDishRepository, DishRepository>();
 builder.Services.AddScoped<IDishSizeRepository, DishSizeRepository>();
-builder.Services.AddScoped<IDishIngridientRepository, DishIngridientRepository>();
 builder.Services.AddScoped<IIngridientRepository, IngridientRepository>();
 builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 builder.Services.AddScoped<IOrderDetailRepository, OrderDetailRepository>();
@@ -27,7 +26,6 @@ builder.Services.AddScoped<IOrderDetailRepository, OrderDetailRepository>();
 builder.Services.AddScoped<IDishSizeService, DishSizeService>();
 builder.Services.AddScoped<IDishService, DishService>();
 builder.Services.AddScoped<IIngridientService, IngridientService>();
-builder.Services.AddScoped<IDishIngridientService, DishIngridientService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IOrderDetailService, OrderDetailService>();
 

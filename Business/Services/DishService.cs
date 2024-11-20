@@ -48,20 +48,28 @@ public class DishService : IDishService
         
         dish.DishSize = await _unitOfWork.DishSizeRepository.GetByIdAsync(dish.DishSizeId);
 
-        var ingredientsList = new List<Ingridient>();
-
-        foreach (var ingrId in dish.DishIngridientsIds)
-        {
-            var ingredient = await _unitOfWork.IngridientRepository.GetByIdAsync(ingrId);
-            if (ingredient != null)
-            {
-                ingredientsList.Add(ingredient);
-            }
-        }
+        var ingredientsList = await _unitOfWork.IngridientRepository.GetIngridientsByDishId(id);
         
         dish.Ingridients = ingredientsList;
 
         return dish;
     }
+    
+    public async Task AddIngridientsToDish(List<string> ingridientNames, Dish dish)
+    {
+        var ingredients = new List<Ingridient>();
+        foreach (var name in ingridientNames)
+        {
+            var ingredient = await _unitOfWork.IngridientRepository.GetByName(name);
+            if (ingredient != null)
+            {
+                ingredients.Add(ingredient);
+            }
+        }
+        dish.Ingridients = ingredients;
+        await _unitOfWork.DishRepository.AddIngridientsToDish(ingredients, dish);
+        await _unitOfWork.SaveAsync();
+    }
+    
 
 }

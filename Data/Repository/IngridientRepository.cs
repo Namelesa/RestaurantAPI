@@ -53,4 +53,14 @@ public class IngridientRepository : IIngridientRepository
         var ingridient = _db.Ingridients.FirstOrDefault(u => u.Name == name);
         return ingridient;
     }
+    
+    public async Task<List<Ingridient>> GetIngridientsByDishId(int dishId)
+    {
+        var ingridients = await _db.DishIngridients
+            .Where(di => di.DishId == dishId)
+            .Select(di => di.Ingridient)
+            .ToListAsync();
+
+        return ingridients;
+    }
 }

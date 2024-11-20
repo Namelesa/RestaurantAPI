@@ -5,9 +5,7 @@ public class Dish : BaseModel
     public string Name { get; set; }
     public string? Image { get; set; }
     
-    public IList<int>? DishIngridientsIds { get; set; }
-    
-    public IList<Ingridient>? Ingridients { get; set; }
+    public List<Ingridient> Ingridients { get; set; }
 
     public int DishSizeId { get; set; }
 

@@ -30,15 +30,6 @@ public class UnitOfWork : IUnitOfWork
         }
     }
     
-    private IDishIngridientRepository _dishIngridientRepository;
-    public IDishIngridientRepository DishIngridientRepository
-    {
-        get
-        {
-            return _dishIngridientRepository ??= new DishIngridientRepository(_db);
-        }
-    }
-    
     private IIngridientRepository _ingridientRepository;
     public IIngridientRepository IngridientRepository
     {
