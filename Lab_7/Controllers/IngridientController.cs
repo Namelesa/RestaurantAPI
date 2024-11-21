@@ -64,10 +64,10 @@ public class IngridientController : ControllerBase
     
     [HttpPost]
     [Route("AddIngridientToDish")]
-    public async Task<ActionResult> AddIngridientToDish(int dishId, int ingridientId)
+    public async Task<ActionResult> AddIngridientToDish(int dishId, string name)
     {
         var dish = await _dishService.GetByIdAsync(dishId);
-        var ingridient = await _ingridientService.GetByIdAsync(ingridientId);
+        var ingridient = await _ingridientService.FindByName(name);
 
         if (dish == null || ingridient == null)
         {
