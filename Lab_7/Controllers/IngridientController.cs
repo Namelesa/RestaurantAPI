@@ -42,7 +42,19 @@ public class IngridientController : ControllerBase
         return ingridient != null ? Ok(ingridient) : NotFound($"Ingredient with ID {id} not found.");
     }
     
+    [HttpGet]
+    [Route("GetDishAndIngridient")]
+    public async Task<ActionResult<List<DishIngridient>>> GetDishAndIngridient(int id)
+    {
+        var dishes = await _ingridientService.GetDishIngridientByIdAsync(id);
+        if (dishes != null)
+        {
+            return Ok(dishes);
+        }
 
+        return NotFound(new{message = "Not found"});
+    }
+    
     // Post ----------------------------------------------------------------------------------------------    
     [HttpPost]
     [Route("AddIngridient")]

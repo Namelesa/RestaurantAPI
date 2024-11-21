@@ -83,4 +83,14 @@ public class IngridientRepository : IIngridientRepository
 
         await _db.SaveChangesAsync();
     }
+    
+    public async Task<List<DishIngridient>> GetDishIngridientByIdAsync(int ingrId)
+    {
+        var dishes = await _db.DishIngridients
+            .Where(u => u.IngridientId == ingrId)
+            .Include(u => u.Dish) 
+            .ToListAsync();
+
+        return dishes;
+    }
 }

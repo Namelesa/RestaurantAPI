@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using Business.Interfaces;
 using Data.Interfaces;
 using Data.Models;
@@ -51,5 +52,11 @@ public class IngridientService : IIngridientService
     {
         await _unitOfWork.IngridientRepository.RemoveIngredientFromDishAsync(dishId, ingredientId);
         await _unitOfWork.SaveAsync();
+    }
+
+    public async Task<List<DishIngridient>> GetDishIngridientByIdAsync(int ingrId)
+    {
+        var result = await _unitOfWork.IngridientRepository.GetDishIngridientByIdAsync(ingrId);
+        return result;
     }
 }
