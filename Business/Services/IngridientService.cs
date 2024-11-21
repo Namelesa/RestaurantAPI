@@ -46,4 +46,10 @@ public class IngridientService : IIngridientService
     {
         return _unitOfWork.IngridientRepository.GetByName(name);
     }
+    
+    public async Task RemoveIngredientFromDishAsync(int dishId, int ingredientId)
+    {
+        await _unitOfWork.IngridientRepository.RemoveIngredientFromDishAsync(dishId, ingredientId);
+        await _unitOfWork.SaveAsync();
+    }
 }

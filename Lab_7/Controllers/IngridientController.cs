@@ -73,6 +73,8 @@ public class IngridientController : ControllerBase
         {
             return NotFound("Dish or ingredient not found.");
         }
+        
+        dish.Ingridients ??= new List<Ingridient>();
 
         dish.Ingridients.Add(ingridient);
         await _dishService.UpdateAsync(dish);
@@ -121,5 +123,28 @@ public class IngridientController : ControllerBase
 
         await _ingridientService.DeleteAsync(ingridient);
         return Ok(new { message = "Ingredient deleted successfully." });
+    }
+    
+    [HttpDelete]
+    [Route("RemoveIngridientFromDish")]
+    public async Task<ActionResult> RemoveIngridientFromDish(int dishId, int ingridientId)
+    {
+        var dish = await _dishService.GetAllInfo(dishId);
+        var ingridient = await _ingridientService.GetByIdAsync(ingridientId);
+
+        if (dish == null || ingridient == null)
+        {
+            return NotFound("Dish or ingredient not found.");
+        }
+        
+        var ingredientExists = dish.Ingridients.Any(i => i.Id == ingridientId);
+        if (!ingredientExists)
+        {
+            return BadRequest("Ingredient is not part of the dish.");
+        }
+
+        await _ingridientService.RemoveIngredientFromDishAsync(dishId, ingridientId);
+
+        return Ok(new { message = $"Removed {ingridient.Name} from {dish.Name}" });
     }
 }

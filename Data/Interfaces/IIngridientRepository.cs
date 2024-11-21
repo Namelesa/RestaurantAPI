@@ -6,4 +6,5 @@ public interface IIngridientRepository : IRepository<Ingridient>
 {
     Task<Ingridient> GetByName(string name);
     Task<List<Ingridient>> GetIngridientsByDishId(int dishId);
+    public Task RemoveIngredientFromDishAsync(int dishId, int ingredientId);
 }

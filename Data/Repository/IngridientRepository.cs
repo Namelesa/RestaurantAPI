@@ -63,4 +63,24 @@ public class IngridientRepository : IIngridientRepository
 
         return ingridients;
     }
+    
+    public async Task RemoveIngredientFromDishAsync(int dishId, int ingredientId)
+    {
+        var dish = await _db.Dishes
+            .Include(d => d.Ingridients)
+            .FirstOrDefaultAsync(d => d.Id == dishId);
+
+        if (dish != null)
+        {
+            var ingredientToRemove = dish.Ingridients.FirstOrDefault(i => i.Id == ingredientId);
+            if (ingredientToRemove != null)
+            {
+                dish.Ingridients.Remove(ingredientToRemove);
+                var dishingr = _db.DishIngridients.FirstOrDefault(u=> u.IngridientId == ingredientToRemove.Id);
+                _db.DishIngridients.Remove(dishingr);
+            }
+        }
+
+        await _db.SaveChangesAsync();
+    }
 }
